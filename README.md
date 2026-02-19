@@ -18,7 +18,7 @@ cd backend
 npm install
 npm run dev
 ```
-The backend will run on `http://localhost:5001`.
+The backend will run on `http://localhost:5005`.
 
 ### 3. Frontend Setup
 ```bash
@@ -27,6 +27,10 @@ npm install
 npm run dev
 ```
 The frontend will run on `http://localhost:3000`.
+
+## Live Deployment Links
+- **Backend (Render):** [https://project-management-3-35g1.onrender.com](https://project-management-3-35g1.onrender.com)
+- **Frontend (Vercel):** (Coming soon...)
 
 ## Features
 - Aesthetic Login & Signup pages.
