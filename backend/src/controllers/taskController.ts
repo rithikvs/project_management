@@ -11,10 +11,17 @@ export const getTasks = async (req: Request, res: Response) => {
 
     const result = hasProjectFilter
       ? await execute(
-          'SELECT * FROM tasks WHERE project_id = :project_id',
-          { project_id: Number(project_id) }
-        )
-      : await execute('SELECT * FROM tasks');
+        `SELECT t.task_id, t.project_id, t.task_name, t.status, t.assigned_to, u.name AS assigned_to_name 
+           FROM tasks t 
+           LEFT JOIN users u ON t.assigned_to = u.id 
+           WHERE t.project_id = :project_id`,
+        { project_id: Number(project_id) }
+      )
+      : await execute(`
+          SELECT t.task_id, t.project_id, t.task_name, t.status, t.assigned_to, u.name AS assigned_to_name 
+          FROM tasks t 
+          LEFT JOIN users u ON t.assigned_to = u.id
+        `);
 
     res.json(result.rows || []);
   } catch (err) {
