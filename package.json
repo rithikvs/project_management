@@ -5,5 +5,10 @@
     "backend-dev": "npm run dev --prefix backend",
     "backend-build": "npm run build --prefix backend",
     "build": "npm run build --prefix frontend"
+  },
+  "dependencies": {
+    "next": "15.1.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   }
 }
