@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/api/auth/:path*',
+        destination: 'http://localhost:5000/api/auth/:path*',
+      },
+      {
         source: '/api/tasks/:path*',
         destination: 'http://localhost:5000/api/tasks/:path*',
       },
