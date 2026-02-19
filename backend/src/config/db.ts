@@ -16,29 +16,33 @@ try {
     oracledb.initOracleClient();
     console.log("Oracle Instant Client initialized (Thick Mode)");
 } catch (err: any) {
-    // If it's already initialized, we don't want to crash.
-    // On cloud platforms (Render/Vercel) where Thin mode is intended, this might fail,
-    // but the app will attempt Thin mode connection later if Thick isn't available.
-    if (err.message.includes('NJS-010')) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('NJS-010')) {
         console.log("Oracle Client already initialized.");
     } else {
         console.error("Warning: Oracle Instant Client not found. Attempting Thin mode connection...");
+        console.error("Note: Oracle 10g requires Thick mode. If connection fails, please install Instant Client.");
     }
 }
+
 
 export async function getConnection() {
     return await oracledb.getConnection(dbConfig);
 }
 
 export async function execute(sql: string, binds: any = [], options: oracledb.ExecuteOptions = {}) {
-    let connection;
+    let connection: oracledb.Connection | undefined;
     try {
         connection = await getConnection();
-        if (options.autoCommit === undefined) options.autoCommit = true;
-        return await connection.execute(sql, binds, options);
+        const execOptions = { autoCommit: true, ...options };
+        return await connection.execute(sql, binds, execOptions);
     } finally {
         if (connection) {
-            try { await connection.close(); } catch (e) { }
+            try {
+                await connection.close();
+            } catch (e) {
+                console.error("Error closing connection:", e);
+            }
         }
     }
 }

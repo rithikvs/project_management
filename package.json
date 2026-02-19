@@ -1,12 +1,12 @@
 {
-  "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.7",
-    "axios": "^1.13.5",
-    "jwt-decode": "^4.0.0"
+  "scripts": {
+    "frontend-dev": "npm run dev --prefix frontend",
+    "frontend-build": "npm run build --prefix frontend",
+    "backend-dev": "npm run dev --prefix backend",
+    "backend-build": "npm run build --prefix backend",
+    "build": "npm run build --prefix frontend"
   },
   "devDependencies": {
-    "@types/jwt-decode": "^2.2.1"
+    "next": "16.1.6"
   }
 }
