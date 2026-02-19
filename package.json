@@ -5,8 +5,5 @@
     "backend-dev": "npm run dev --prefix backend",
     "backend-build": "npm run build --prefix backend",
     "build": "npm run build --prefix frontend"
-  },
-  "devDependencies": {
-    "next": "16.1.6"
   }
 }
