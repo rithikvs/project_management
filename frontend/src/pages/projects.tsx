@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardActions,
   Chip,
   IconButton,
   InputAdornment,
@@ -21,7 +20,8 @@ import {
   DialogActions,
   CircularProgress,
   Tooltip,
-  Paper
+  Paper,
+  GlobalStyles
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -58,16 +58,28 @@ export default function ProjectsPage() {
     try {
       const res = await axios.get(API_BASE);
       let data = res.data;
-      if (Array.isArray(data) && Array.isArray(data[0])) {
-        data = data.map((row: any[]) => ({
-          project_id: row[0],
-          project_name: row[1],
-          description: row[2],
-          created_by_name: row[3],
-          created_by: row[4],
-        }));
-      }
-      setProjects(data);
+      const normalized: Project[] = (Array.isArray(data) ? data : [])
+        .map((p: any) => {
+          if (Array.isArray(p)) {
+            return {
+              project_id: p[0],
+              project_name: p[1],
+              description: p[2],
+              created_by_name: p[3],
+              created_by: p[4]
+            };
+          }
+          return {
+            project_id: p.project_id || p.PROJECT_ID || p.id || p.ID,
+            project_name: p.project_name || p.PROJECT_NAME || p.name || p.NAME || '',
+            description: p.description || p.DESCRIPTION || '',
+            created_by_name: p.created_by_name || p.CREATED_BY_NAME || '',
+            created_by: p.created_by || p.CREATED_BY
+          };
+        })
+        .filter(p => p.project_id !== undefined && p.project_id !== null);
+
+      setProjects(normalized);
     } catch (err) {
       showToast('error', 'Failed to fetch projects');
     }
@@ -237,7 +249,7 @@ export default function ProjectsPage() {
       ) : (
         <Grid container spacing={3}>
           {filteredProjects.map((project) => (
-            <Grid item xs={12} sm={6} lg={4} key={project.project_id}>
+            <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={`project-${project.project_id}`}>
               <Card
                 onClick={() => router.push(`/tasks?project_id=${project.project_id}`)}
                 sx={{
@@ -434,12 +446,12 @@ export default function ProjectsPage() {
         </Box>
       )}
 
-      <style jsx global>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
+      <GlobalStyles styles={{
+        '@keyframes slideIn': {
+          from: { transform: 'translateX(100%)', opacity: 0 },
+          to: { transform: 'translateX(0)', opacity: 1 },
+        },
+      }} />
     </Layout>
   );
 }
