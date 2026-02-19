@@ -6,15 +6,15 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/auth/:path*',
-        destination: 'http://localhost:5000/api/auth/:path*',
+        destination: 'https://project-management-2-uqia.onrender.com/api/auth/:path*',
       },
       {
         source: '/api/tasks/:path*',
-        destination: 'http://localhost:5000/api/tasks/:path*',
+        destination: 'https://project-management-2-uqia.onrender.com/api/tasks/:path*',
       },
       {
         source: '/api/projects/:path*',
-        destination: 'http://localhost:5000/api/projects/:path*',
+        destination: 'https://project-management-2-uqia.onrender.com/api/projects/:path*',
       },
     ];
   },
