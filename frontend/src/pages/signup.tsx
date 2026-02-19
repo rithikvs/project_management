@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
+import api from '../utils/api';
+
 export default function Signup() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -16,24 +18,14 @@ export default function Signup() {
         setError('');
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Signup failed');
-            }
+            await api.post('/api/auth/signup', { name, email, password });
 
             router.push({
                 pathname: '/login',
                 query: { email }
             });
         } catch (err: any) {
-            setError(err.message);
+            setError(err.response?.data?.message || err.message || 'Signup failed');
         } finally {
             setLoading(false);
         }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import api from '@/utils/api';
 import Layout from '@/components/Layout';
 import {
   Box,
@@ -39,7 +39,6 @@ interface Project {
   created_by_name?: string;
 }
 
-const API_BASE = 'http://localhost:5000/api/projects';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -56,7 +55,7 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(API_BASE);
+      const res = await api.get('/api/projects');
       let data = res.data;
       const normalized: Project[] = (Array.isArray(data) ? data : [])
         .map((p: any) => {
@@ -108,7 +107,7 @@ export default function ProjectsPage() {
       }
     }
     try {
-      await axios.post(API_BASE, { project_name: name, description, created_by });
+      await api.post('/api/projects', { project_name: name, description, created_by });
       setName('');
       setDescription('');
       setOpenCreateDialog(false);
@@ -121,7 +120,7 @@ export default function ProjectsPage() {
 
   const handleUpdate = async (id: number) => {
     try {
-      await axios.put(`${API_BASE}/${id}`, { project_name: name, description });
+      await api.put(`/api/projects/${id}`, { project_name: name, description });
       setEditingId(null);
       setName('');
       setDescription('');
@@ -135,7 +134,7 @@ export default function ProjectsPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${API_BASE}/${id}`);
+      await api.delete(`/api/projects/${id}`);
       fetchProjects();
       showToast('success', 'Project deleted');
     } catch (err) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/utils/api';
 import {
   Box,
   Button,
@@ -83,7 +83,7 @@ const TasksPage: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/projects');
+      const res = await api.get('/api/projects');
       let data = res.data;
       if (Array.isArray(data) && Array.isArray(data[0])) {
         data = data.map((row: any[]) => ({
@@ -109,7 +109,7 @@ const TasksPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('http://localhost:5000/api/tasks', {
+      const res = await api.get('/api/tasks', {
         params: selectedProjectId ? { project_id: selectedProjectId } : undefined,
       });
       let data = res.data;
@@ -204,10 +204,10 @@ const TasksPage: React.FC = () => {
         assigned_to: form.assigned_to === '' ? null : Number(form.assigned_to),
       };
       if (editTask) {
-        await axios.put(`http://localhost:5000/api/tasks/${editTask.task_id}`, payload);
+        await api.put(`/api/tasks/${editTask.task_id}`, payload);
         showToast('success', 'Task updated');
       } else {
-        await axios.post('http://localhost:5000/api/tasks', payload);
+        await api.post('/api/tasks', payload);
         showToast('success', 'Task created');
       }
       await fetchTasks();
@@ -219,7 +219,7 @@ const TasksPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${id}`);
+      await api.delete(`/api/tasks/${id}`);
       await fetchTasks();
       showToast('success', 'Task deleted');
     } catch (e) {
