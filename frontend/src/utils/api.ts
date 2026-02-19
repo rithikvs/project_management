@@ -1,10 +1,13 @@
 import axios from 'axios';
 
-// Detect if we are running locally or on a deployed server
-const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+// Detect the current hostname
+const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
 
-// use the environment variable if set, otherwise fallback to localhost
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:5000' : 'https://project-management-2-uqia.onrender.com');
+// If we are on localhost/IP, point to the same host on port 5003
+const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.');
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isDevelopment ? `${protocol}//${hostname}:5005` : 'https://project-management-2-uqia.onrender.com');
 
 const api = axios.create({
     baseURL: API_BASE_URL,

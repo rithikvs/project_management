@@ -1,17 +1,21 @@
 import { Request, Response } from 'express';
-import { execute } from '../config/db';
+import Project from '../models/Project';
 
 // Create a new project
 export const createProject = async (req: Request, res: Response) => {
   const { project_name, description, created_by } = req.body;
   try {
-    const result = await execute(
-      'INSERT INTO projects (project_name, description, created_by) VALUES (:1, :2, :3)',
-      [project_name, description, created_by]
-    );
-    res.status(201).json({ message: 'Project created successfully', projectId: result.lastRowid });
+    console.log('Attempting to save project to MongoDB...');
+    const newProject = new Project({
+      project_name,
+      description,
+      created_by
+    });
+    const savedProject = await newProject.save();
+    console.log('SUCCESS: Project saved with ID:', savedProject._id);
+    res.status(201).json({ message: 'Project created successfully', projectId: savedProject._id });
   } catch (error) {
-    console.error('Create Project Error:', error);
+    console.error('ERROR: Failed to save project:', error);
     res.status(500).json({ error: 'Failed to create project', details: error });
   }
 };
@@ -19,12 +23,18 @@ export const createProject = async (req: Request, res: Response) => {
 // Get all projects
 export const getProjects = async (req: Request, res: Response) => {
   try {
-    const result = await execute(`
-      SELECT p.project_id, p.project_name, p.description, u.name AS created_by_name, p.created_by
-      FROM projects p
-      LEFT JOIN users u ON p.created_by = u.id
-    `, []);
-    res.json(result.rows);
+    const projects = await Project.find().populate('created_by', 'name');
+
+    // Format to match old SQL output if needed
+    const formattedProjects = projects.map(p => ({
+      project_id: p._id,
+      project_name: p.project_name,
+      description: p.description,
+      created_by_name: (p.created_by as any)?.name,
+      created_by: (p.created_by as any)?._id || p.created_by
+    }));
+
+    res.json(formattedProjects);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch projects', details: error });
   }
@@ -34,17 +44,20 @@ export const getProjects = async (req: Request, res: Response) => {
 export const getProjectById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const result = await execute(`
-      SELECT p.project_id, p.project_name, p.description, u.name AS created_by_name, p.created_by
-      FROM projects p
-      LEFT JOIN users u ON p.created_by = u.id
-      WHERE p.project_id = :1
-    `, [id]);
-    const rows = result.rows ?? [];
-    if (rows.length === 0) {
+    const project = await Project.findById(id).populate('created_by', 'name');
+    if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    res.json(rows[0]);
+
+    const formattedProject = {
+      project_id: project._id,
+      project_name: project.project_name,
+      description: project.description,
+      created_by_name: (project.created_by as any)?.name,
+      created_by: (project.created_by as any)?._id || project.created_by
+    };
+
+    res.json(formattedProject);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch project', details: error });
   }
@@ -55,10 +68,7 @@ export const updateProject = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { project_name, description } = req.body;
   try {
-    await execute(
-      'UPDATE projects SET project_name = :1, description = :2 WHERE project_id = :3',
-      [project_name, description, id]
-    );
+    await Project.findByIdAndUpdate(id, { project_name, description });
     res.json({ message: 'Project updated successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update project', details: error });
@@ -69,7 +79,7 @@ export const updateProject = async (req: Request, res: Response) => {
 export const deleteProject = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    await execute('DELETE FROM projects WHERE project_id = :1', [id]);
+    await Project.findByIdAndDelete(id);
     res.json({ message: 'Project deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete project', details: error });

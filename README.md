@@ -1,16 +1,16 @@
-# Oracle SQL 10g Auth Project
+# Project Management System (MongoDB Atlas)
 
-This project is split into a **Frontend** (Next.js) and a **Backend** (Express + Oracle).
+This project is split into a **Frontend** (Next.js) and a **Backend** (Express + MongoDB).
 
 ## Folder Structure
 - `/frontend`: Next.js application with Tailwind CSS.
-- `/backend`: Node.js/Express server connecting to Oracle 10g.
+- `/backend`: Node.js/Express server connecting to MongoDB Atlas.
 
 ## Setup Instructions
 
 ### 1. Database Setup
-- Open `/backend/schema.sql` and run the script in your Oracle SQL command line.
-- Copy `/backend/.env.example` to `/backend/.env` and fill in your Oracle credentials.
+- Create a Cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+- Get your connection string and add it to `/backend/.env` as `MONGODB_URI`.
 
 ### 2. Backend Setup
 ```bash
@@ -18,7 +18,7 @@ cd backend
 npm install
 npm run dev
 ```
-The backend will run on `https://project-management-2-uqia.onrender.com`.
+The backend will run on `http://localhost:5001`.
 
 ### 3. Frontend Setup
 ```bash
@@ -30,6 +30,7 @@ The frontend will run on `http://localhost:3000`.
 
 ## Features
 - Aesthetic Login & Signup pages.
-- Oracle SQL 10g integration using `oracledb` thick mode.
+- MongoDB Atlas integration using Mongoose.
 - JWT authentication.
 - Secure password hashing with `bcryptjs`.
+- Project and Task management.

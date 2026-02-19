@@ -31,10 +31,10 @@ import FolderIcon from '@mui/icons-material/Folder';
 import PersonIcon from '@mui/icons-material/Person';
 
 interface Project {
-  project_id: number;
+  project_id: string | number;
   project_name: string;
   description: string;
-  created_by: number;
+  created_by: string | number;
   status?: string;
   created_by_name?: string;
 }
@@ -45,10 +45,10 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [showDeleteId, setShowDeleteId] = useState<number | null>(null);
+  const [showDeleteId, setShowDeleteId] = useState<string | number | null>(null);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -69,11 +69,11 @@ export default function ProjectsPage() {
             };
           }
           return {
-            project_id: p.project_id || p.PROJECT_ID || p.id || p.ID,
+            project_id: p.project_id || p.PROJECT_ID || p.id || p.ID || p._id,
             project_name: p.project_name || p.PROJECT_NAME || p.name || p.NAME || '',
             description: p.description || p.DESCRIPTION || '',
             created_by_name: p.created_by_name || p.CREATED_BY_NAME || '',
-            created_by: p.created_by || p.CREATED_BY
+            created_by: p.created_by || p.CREATED_BY || p.user_id
           };
         })
         .filter(p => p.project_id !== undefined && p.project_id !== null);
@@ -118,7 +118,7 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleUpdate = async (id: number) => {
+  const handleUpdate = async (id: string | number) => {
     try {
       await api.put(`/api/projects/${id}`, { project_name: name, description });
       setEditingId(null);
@@ -132,7 +132,7 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     try {
       await api.delete(`/api/projects/${id}`);
       fetchProjects();

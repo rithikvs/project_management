@@ -25,6 +25,7 @@ import {
   Tooltip,
   CircularProgress,
   Avatar,
+  Autocomplete,
   type SelectChangeEvent
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
@@ -38,17 +39,23 @@ import Layout from '@/components/Layout';
 import { useRouter } from 'next/router';
 
 interface Task {
-  task_id: number;
-  project_id: number;
+  task_id: string | number;
+  project_id: string | number;
   task_name: string;
   status: string;
-  assigned_to: number;
+  assigned_to: string | number;
   assigned_to_name?: string;
 }
 
 interface Project {
-  project_id: number;
+  project_id: string | number;
   project_name: string;
+}
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
 }
 
 const statusOptions = ['Pending', 'In Progress', 'Completed'];
@@ -59,16 +66,22 @@ const statusColors: Record<string, any> = {
   'Completed': { color: '#10b981', bg: '#dcfce7', icon: <CheckCircleIcon fontSize="small" /> },
 };
 
+const getUserDisplayName = (email: string | number, users: User[]) => {
+  const user = users.find(u => u.email === email);
+  return user ? user.name : String(email || 'Unassigned');
+};
+
 const TasksPage: React.FC = () => {
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | number | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [form, setForm] = useState({
     project_id: '',
@@ -94,12 +107,21 @@ const TasksPage: React.FC = () => {
       const normalized: Project[] = Array.isArray(data)
         ? data
           .map((p: any) => ({
-            project_id: Number(p?.project_id),
-            project_name: String(p?.project_name ?? ''),
+            project_id: p.project_id || p.PROJECT_ID || p.id || p.ID || p._id,
+            project_name: String(p.project_name || p.PROJECT_NAME || p.name || ''),
           }))
-          .filter((p: Project) => Number.isFinite(p.project_id) && p.project_name.length > 0)
+          .filter((p: Project) => p.project_id && p.project_name.length > 0)
         : [];
       setProjects(normalized);
+    } catch {
+      // non-blocking
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get('/api/auth/users');
+      setUsers(res.data);
     } catch {
       // non-blocking
     }
@@ -127,17 +149,17 @@ const TasksPage: React.FC = () => {
       const normalized: Task[] = Array.isArray(data)
         ? data
           .map((t: any) => ({
-            task_id: Number(t?.task_id),
-            project_id: Number(t?.project_id),
-            task_name: String(t?.task_name ?? ''),
-            status: String(t?.status ?? ''),
-            assigned_to: Number(t?.assigned_to),
-            assigned_to_name: t?.assigned_to_name ? String(t.assigned_to_name) : undefined,
+            task_id: t.task_id || t.id || t._id,
+            project_id: t.project_id || t.PROJECT_ID,
+            task_name: String(t.task_name || t.TASK_NAME || ''),
+            status: String(t.status || t.STATUS || 'Pending'),
+            assigned_to: t.assigned_to || t.ASSIGNED_TO,
+            assigned_to_name: t.assigned_to_name || t.ASSIGNED_TO_NAME || undefined,
           }))
           .filter(
             (t: Task) =>
-              Number.isFinite(t.task_id) &&
-              Number.isFinite(t.project_id) &&
+              t.task_id &&
+              t.project_id &&
               t.task_name.length > 0
           )
         : [];
@@ -152,6 +174,7 @@ const TasksPage: React.FC = () => {
 
   useEffect(() => {
     void fetchProjects();
+    void fetchUsers();
   }, []);
 
   useEffect(() => {
@@ -175,7 +198,12 @@ const TasksPage: React.FC = () => {
       });
     } else {
       setEditTask(null);
-      setForm({ project_id: '', task_name: '', status: 'Pending', assigned_to: '' });
+      setForm({
+        project_id: selectedProjectId || '',
+        task_name: '',
+        status: 'Pending',
+        assigned_to: ''
+      });
     }
     setOpen(true);
   };
@@ -198,11 +226,12 @@ const TasksPage: React.FC = () => {
   const handleSubmit = async () => {
     try {
       const payload = {
-        project_id: form.project_id === '' ? null : Number(form.project_id),
+        project_id: form.project_id || null,
         task_name: form.task_name,
         status: form.status,
-        assigned_to: form.assigned_to === '' ? null : Number(form.assigned_to),
+        assigned_to: form.assigned_to || '',
       };
+      console.log('Sending Task Payload:', payload);
       if (editTask) {
         await api.put(`/api/tasks/${editTask.task_id}`, payload);
         showToast('success', 'Task updated');
@@ -213,11 +242,12 @@ const TasksPage: React.FC = () => {
       await fetchTasks();
       handleClose();
     } catch (e: any) {
-      showToast('error', 'Failed to save task');
+      const errorMsg = e.response?.data?.error || e.response?.data?.message || 'Failed to save task';
+      showToast('error', errorMsg);
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     try {
       await api.delete(`/api/tasks/${id}`);
       await fetchTasks();
@@ -388,10 +418,10 @@ const TasksPage: React.FC = () => {
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Avatar sx={{ width: 24, height: 24, fontSize: '10px', bgcolor: '#4f46e5' }}>
-                      {(task.assigned_to_name || String(task.assigned_to)).charAt(0).toUpperCase()}
+                      {getUserDisplayName(task.assigned_to, users).charAt(0).toUpperCase()}
                     </Avatar>
                     <Typography variant="body2" sx={{ color: '#64748b' }}>
-                      {task.assigned_to_name || `User ${task.assigned_to}`}
+                      {getUserDisplayName(task.assigned_to, users)}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -458,14 +488,21 @@ const TasksPage: React.FC = () => {
                 <MenuItem key={status} value={status}>{status}</MenuItem>
               ))}
             </Select>
-            <TextField
-              label="Assigned To (User ID)"
-              name="assigned_to"
-              type="number"
-              fullWidth
+            <Autocomplete
+              freeSolo
+              options={users.map((u) => u.email)}
               value={form.assigned_to}
-              onChange={handleInputChange}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              onInputChange={(event, newValue) => {
+                setForm(prev => ({ ...prev, assigned_to: newValue }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Assigned To"
+                  placeholder="Type a name or select an email"
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              )}
             />
           </Box>
         </DialogContent>
