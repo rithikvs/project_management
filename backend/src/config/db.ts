@@ -4,13 +4,27 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const dbConfig = {
-    user: process.env.ORACLE_USER,
-    password: process.env.ORACLE_PASSWORD,
-    connectString: process.env.ORACLE_CONN_STR,
+    user: process.env.ORACLE_USER || "system",
+    password: process.env.ORACLE_PASSWORD || "2111",
+    connectString: process.env.ORACLE_CONN_STR || "localhost:1521/xe",
 };
 
-// No need for initOracleClient() for Thin mode (oracledb 6.x+)
-// This allows deployment to Render/Vercel without installing Instant Client.
+// Enable "Thick Mode" for Oracle 10g support
+try {
+    // This is required to connect to Oracle versions older than 12.1
+    // It requires the Oracle Instant Client to be installed on your system.
+    oracledb.initOracleClient();
+    console.log("Oracle Instant Client initialized (Thick Mode)");
+} catch (err: any) {
+    // If it's already initialized, we don't want to crash.
+    // On cloud platforms (Render/Vercel) where Thin mode is intended, this might fail,
+    // but the app will attempt Thin mode connection later if Thick isn't available.
+    if (err.message.includes('NJS-010')) {
+        console.log("Oracle Client already initialized.");
+    } else {
+        console.error("Warning: Oracle Instant Client not found. Attempting Thin mode connection...");
+    }
+}
 
 export async function getConnection() {
     return await oracledb.getConnection(dbConfig);
