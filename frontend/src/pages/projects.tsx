@@ -248,7 +248,7 @@ export default function ProjectsPage() {
       ) : (
         <Grid container spacing={3}>
           {filteredProjects.map((project) => (
-            <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={`project-${project.project_id}`}>
+            <Grid item xs={12} sm={6} lg={4} key={`project-${project.project_id}`}>
               <Card
                 onClick={() => router.push(`/tasks?project_id=${project.project_id}`)}
                 sx={{
