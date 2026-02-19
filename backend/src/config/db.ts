@@ -4,17 +4,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const dbConfig = {
-    user: process.env.ORACLE_USER || "system",
-    password: process.env.ORACLE_PASSWORD || "2111",
-    connectString: process.env.ORACLE_CONN_STR || "localhost:1521/xe",
+    user: process.env.ORACLE_USER,
+    password: process.env.ORACLE_PASSWORD,
+    connectString: process.env.ORACLE_CONN_STR,
 };
 
-try {
-    // ...existing code...
-    oracledb.initOracleClient();
-} catch (err) {
-    // ...existing code...
-}
+// No need for initOracleClient() for Thin mode (oracledb 6.x+)
+// This allows deployment to Render/Vercel without installing Instant Client.
 
 export async function getConnection() {
     return await oracledb.getConnection(dbConfig);
