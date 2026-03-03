@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { GoogleLogin } from '@react-oauth/google';
 
 import api from '../utils/api';
 
@@ -34,6 +35,29 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await api.post('/api/auth/google', {
+        token: credentialResponse.credential,
+      });
+      const data = res.data;
+
+      localStorage.setItem('token', data.token);
+      router.push('/projects');
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Google login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google login failed');
   };
 
   return (
@@ -99,6 +123,20 @@ export default function Login() {
             {loading ? 'Logging in...' : 'LOGIN'}
           </button>
         </form>
+
+        <div className="my-4 flex items-center w-full">
+          <div className="flex-1 border-t border-blue-300"></div>
+          <div className="px-2 text-blue-400 text-xs font-medium">OR</div>
+          <div className="flex-1 border-t border-blue-300"></div>
+        </div>
+
+        <div className="w-full flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+          />
+        </div>
+
         <div className="mt-6 text-center text-blue-400 text-xs">
           Don't have an account?{' '}
           <Link href="/signup" className="text-blue-600 hover:underline font-medium">Sign up</Link>
